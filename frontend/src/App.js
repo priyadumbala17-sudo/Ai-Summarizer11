@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Video, Layout, Clock, Brain, Book, Cloud, Download, FileJson, Loader2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Video, Layout, Brain, Book, Cloud, Download, FileJson, Loader2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 function App() {
