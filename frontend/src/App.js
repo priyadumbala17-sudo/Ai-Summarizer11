@@ -25,7 +25,7 @@ function App() {
     setQuizResults({});
 
     try {
-      const response = await fetch('http://localhost:5000/analyze', {
+      const response = await fetch('https://ai-summarizer-backend-io1r.onrender.com/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
