@@ -23,13 +23,34 @@ def fetch_transcript(video_id: str, language: str = "en") -> Tuple[Optional[str]
     Return (transcript_text, error_message).
     Supports both the legacy and the new youtube_transcript_api APIs.
     Language parameter: 'en' (English)
+    Uses proxy to bypass YouTube IP restrictions on cloud platforms.
     """
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
+        from youtube_transcript_api.proxies import GenericProxyConfig
+        import os
+        
+        # Configure proxy to bypass YouTube IP blocks on cloud platforms
+        proxy_host = os.getenv('PROXY_HOST')
+        proxy_port = os.getenv('PROXY_PORT')
+        proxy_user = os.getenv('PROXY_USER')
+        proxy_pass = os.getenv('PROXY_PASS')
+        
+        if proxy_host and proxy_port:
+            print(f"🔧 Configuring proxy: {proxy_host}:{proxy_port}")
+            # Build proxy URL: http://user:pass@host:port
+            proxy_url = f"http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}" if proxy_user else f"http://{proxy_host}:{proxy_port}"
+            
+            # Create proxy config
+            proxy_config = GenericProxyConfig(proxy_url=proxy_url)
+            api = YouTubeTranscriptApi(proxy_config=proxy_config)
+            print("✅ Proxy configured successfully")
+        else:
+            print("⚠️  No proxy configured, using direct connection")
+            api = YouTubeTranscriptApi()
 
         # ── new API (>=0.6): instantiate, then call .list() ──────────────────
         if not hasattr(YouTubeTranscriptApi, "get_transcript"):
-            api = YouTubeTranscriptApi()
             transcript_list = api.list(video_id)
             
             # Try to get the requested language, fall back to available options
@@ -384,17 +405,17 @@ def analyze_with_gemini(transcript: str, api_keys: list, groq_api_keys: list = [
     original_transcript_length = len(transcript)
     
     # DYNAMIC OPTIMIZATION: Scale transcript limit based on original length
-    # This ensures long videos get more content for better analysis
+    # Reduced to fit within Groq's 12,000 TPM limit
     if original_transcript_length > 200000:  # Very long (>200K chars, e.g., 12+ hours)
-        max_chars = 25000  # Use 25K for very long videos
+        max_chars = 10000  # Use 10K for very long videos
     elif original_transcript_length > 100000:  # Long (100K-200K)
-        max_chars = 20000  # Use 20K for long videos
+        max_chars = 8000   # Use 8K for long videos
     elif original_transcript_length > 50000:  # Medium-long (50K-100K)
-        max_chars = 15000  # Use 15K for medium-long
+        max_chars = 7000   # Use 7K for medium-long
     elif original_transcript_length > 20000:  # Short-medium (20K-50K)
-        max_chars = 10000   # Use 10K for short-medium
+        max_chars = 6000   # Use 6K for short-medium
     else:
-        max_chars = 5000   # Default 5K for shorter videos
+        max_chars = 4000   # Default 4K for shorter videos
     
     optimized_transcript = _optimize_transcript(transcript, max_chars=max_chars)
     print(f"Transcript optimized: {len(transcript)} -> {len(optimized_transcript)} chars ({len(optimized_transcript)/len(transcript)*100:.1f}%)")
@@ -647,12 +668,17 @@ def _generate_demo_data(transcript: str) -> dict:
     quiz_text = ""
     for i in range(min(num_quiz, len(quiz_questions))):
         question, answer = quiz_questions[i]
+        # Extract the letter from answer (e.g., "B) To help students..." -> "B")
+        answer_letter = answer.split(")")[0].strip()
+        # Extract the text after the letter (e.g., "B) To help..." -> "To help...")
+        answer_text = ")".join(answer.split(")")[1:]).strip()
+        
         quiz_text += f"""Q{i+1}. {question}
 A) Incorrect option
-{answer}
+B) {answer_text}
 C) Incorrect option
 D) Incorrect option
-**Answer:** {answer}
+**Answer:** {answer_letter})
 
 """
     
