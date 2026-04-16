@@ -41,8 +41,8 @@ def fetch_transcript(video_id: str, language: str = "en") -> Tuple[Optional[str]
             # Build proxy URL: http://user:pass@host:port
             proxy_url = f"http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}" if proxy_user else f"http://{proxy_host}:{proxy_port}"
             
-            # Create proxy config
-            proxy_config = GenericProxyConfig(proxy_url=proxy_url)
+            # Create proxy config - use http_url and https_url parameters
+            proxy_config = GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
             api = YouTubeTranscriptApi(proxy_config=proxy_config)
             print("✅ Proxy configured successfully")
         else:
