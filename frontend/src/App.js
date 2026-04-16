@@ -25,7 +25,7 @@ function App() {
     setQuizResults({});
 
     try {
-      const response = await fetch('https://ai-summarizer-backend-io1r.onrender.com/analyze', {
+      const response = await fetch('https://barometer-security-legwork.ngrok-free.dev/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
